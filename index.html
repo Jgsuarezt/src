@@ -1,16 +1,28 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Posterizador — Convierte tu foto en un póster gigante</title>
+<title id="pageTitle">Posterizer</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
+<!-- ==================== SELECTOR DE IDIOMA ==================== -->
+<div class="lang-overlay" id="langOverlay">
+  <div class="lang-modal">
+    <p class="lang-modal-title">Select your language</p>
+    <p class="lang-modal-sub">Elige tu idioma · Choisissez votre langue · Scegli la tua lingua · Escolha o seu idioma · Wähle deine Sprache · 选择语言</p>
+    <div class="lang-grid" id="langGrid"></div>
+  </div>
+</div>
+
 <header class="topbar">
-  <h1>🖨️ Posterizador</h1>
-  <p class="tagline">Convierte cualquier imagen en un póster gigante impreso en varias hojas A4/Carta, al estilo Rasterbator.</p>
+  <div class="topbar-row">
+    <h1>🖨️ <span id="txt-appName">Posterizer</span></h1>
+    <select id="langSwitch" class="lang-switch" aria-label="Language"></select>
+  </div>
+  <p class="tagline" id="txt-tagline"></p>
 </header>
 
 <main class="layout">
@@ -19,24 +31,24 @@
   <section class="panel" id="controls">
 
     <div class="field-group">
-      <h2>1. Imagen</h2>
+      <h2><span class="step-no">1.</span> <span id="txt-step1Title"></span></h2>
       <label class="dropzone" id="dropzone">
         <input type="file" id="fileInput" accept="image/*" hidden>
-        <span id="dropzoneText">Arrastra una imagen aquí o haz clic para elegirla</span>
+        <span id="dropzoneText"></span>
         <img id="thumb" alt="" hidden>
       </label>
     </div>
 
     <div class="field-group">
-      <h2>2. Tamaño final del póster</h2>
+      <h2><span class="step-no">2.</span> <span id="txt-step2Title"></span></h2>
       <div class="row">
-        <label>Ancho
+        <label><span id="txt-fieldWidth"></span>
           <div class="unit-input">
             <input type="number" id="posterW" value="100" min="5" step="1">
             <span>cm</span>
           </div>
         </label>
-        <label>Alto
+        <label><span id="txt-fieldHeight"></span>
           <div class="unit-input">
             <input type="number" id="posterH" value="70" min="5" step="1">
             <span>cm</span>
@@ -45,36 +57,36 @@
       </div>
       <label class="checkbox-row">
         <input type="checkbox" id="lockAspect" checked>
-        Mantener proporción de la imagen
+        <span id="txt-lockAspect"></span>
       </label>
     </div>
 
     <div class="field-group">
-      <h2>3. Papel de impresión</h2>
+      <h2><span class="step-no">3.</span> <span id="txt-step3Title"></span></h2>
       <div class="row">
-        <label>Tamaño
+        <label><span id="txt-fieldPaperSize"></span>
           <select id="pageSize">
             <option value="A4" selected>A4 (210 × 297 mm)</option>
-            <option value="LETTER">Carta (215.9 × 279.4 mm)</option>
-            <option value="LEGAL">Legal (215.9 × 355.6 mm)</option>
+            <option value="LETTER" id="opt-paperLetter">Letter (215.9 × 279.4 mm)</option>
+            <option value="LEGAL" id="opt-paperLegal">Legal (215.9 × 355.6 mm)</option>
             <option value="A3">A3 (297 × 420 mm)</option>
           </select>
         </label>
-        <label>Orientación
+        <label><span id="txt-fieldOrientation"></span>
           <select id="orientation">
-            <option value="portrait" selected>Vertical</option>
-            <option value="landscape">Horizontal</option>
+            <option value="portrait" selected id="opt-orientationPortrait">Portrait</option>
+            <option value="landscape" id="opt-orientationLandscape">Landscape</option>
           </select>
         </label>
       </div>
       <div class="row">
-        <label>Margen de impresión
+        <label><span id="txt-fieldMargin"></span>
           <div class="unit-input">
             <input type="number" id="margin" value="5" min="0" step="1">
             <span>mm</span>
           </div>
         </label>
-        <label>Solape para pegar
+        <label><span id="txt-fieldOverlap"></span>
           <div class="unit-input">
             <input type="number" id="overlap" value="10" min="0" step="1">
             <span>mm</span>
@@ -84,32 +96,31 @@
     </div>
 
     <div class="field-group">
-      <h2>4. Efecto de trama</h2>
-      <label>Estilo
+      <h2><span class="step-no">4.</span> <span id="txt-step4Title"></span></h2>
+      <label><span id="txt-fieldStyle"></span>
         <select id="effect">
-          <option value="none">Ninguno (imagen normal)</option>
-          <option value="bw" selected>Puntos blanco y negro (clásico)</option>
-          <option value="color">Puntos a color</option>
+          <option value="none" id="opt-effectNone">None</option>
+          <option value="bw" selected id="opt-effectBw">Black &amp; white dots</option>
+          <option value="color" id="opt-effectColor">Color dots</option>
         </select>
       </label>
-      <label id="dotSizeLabel">Tamaño de punto
+      <label id="dotSizeLabel"><span id="txt-fieldDotSize"></span> <span id="dotSizeValue" class="mono">8px</span>
         <input type="range" id="dotSize" min="3" max="30" value="8">
-        <span id="dotSizeValue">8 px</span>
       </label>
     </div>
 
     <div class="field-group">
-      <h2>5. Calidad</h2>
-      <label>Resolución de impresión
+      <h2><span class="step-no">5.</span> <span id="txt-step5Title"></span></h2>
+      <label><span id="txt-fieldResolution"></span>
         <select id="dpi">
-          <option value="100">Borrador (100 dpi, rápido)</option>
-          <option value="150" selected>Normal (150 dpi)</option>
-          <option value="300">Alta calidad (300 dpi, lento)</option>
+          <option value="100" id="opt-dpiDraft">Draft (100 dpi)</option>
+          <option value="150" selected id="opt-dpiNormal">Normal (150 dpi)</option>
+          <option value="300" id="opt-dpiHigh">High (300 dpi)</option>
         </select>
       </label>
     </div>
 
-    <button id="generateBtn" class="primary-btn" disabled>Generar póster</button>
+    <button id="generateBtn" class="primary-btn" disabled></button>
     <p class="hint" id="statusText"></p>
   </section>
 
@@ -117,7 +128,7 @@
   <section class="stage" id="stage">
 
     <div class="stage-empty" id="stageEmpty">
-      <p>Sube una imagen y pulsa <strong>Generar póster</strong> para ver aquí la vista previa página por página.</p>
+      <p id="txt-stageEmpty"></p>
     </div>
 
     <div class="stage-preview" id="stagePreview" hidden>
@@ -128,8 +139,8 @@
     <div class="stage-toolbar" id="stageToolbar" hidden>
       <span id="pageCountText"></span>
       <div class="spacer"></div>
-      <button id="printBtn" class="secondary-btn">🖨️ Imprimir</button>
-      <button id="pdfBtn" class="secondary-btn">⬇️ Descargar PDF</button>
+      <button id="printBtn" class="secondary-btn"></button>
+      <button id="pdfBtn" class="secondary-btn"></button>
     </div>
 
     <div id="pagesContainer" class="pages-container"></div>
@@ -138,11 +149,10 @@
 
 </main>
 
-<footer class="foot">
-  Todo el procesamiento ocurre en tu navegador: la imagen nunca se sube a ningún servidor.
-</footer>
+<footer class="foot" id="txt-footer"></footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

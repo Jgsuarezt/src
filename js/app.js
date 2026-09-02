@@ -72,7 +72,7 @@
         thumb.hidden = false;
         dropzoneText.hidden = true;
         generateBtn.disabled = false;
-        setStatus(`Imagen cargada: ${image.naturalWidth} × ${image.naturalHeight} px`);
+        setStatus(t("statusImageLoaded", image.naturalWidth, image.naturalHeight));
         if (lockAspect.checked) syncHeightFromWidth();
       };
       image.src = e.target.result;
@@ -214,7 +214,7 @@
 
   function generate() {
     if (!img) return;
-    setStatus("Generando…");
+    setStatus(t("statusGenerating"));
     generateBtn.disabled = true;
 
     // usamos un pequeño timeout para que el navegador pinte el estado "Generando…"
@@ -223,7 +223,7 @@
         doGenerate();
       } catch (err) {
         console.error(err);
-        setStatus("Ocurrió un error generando el póster: " + err.message);
+        setStatus(t("statusError", err.message));
       } finally {
         generateBtn.disabled = false;
       }
@@ -243,7 +243,7 @@
     const printableW = pageWmm - 2 * margin;
     const printableH = pageHmm - 2 * margin;
     if (printableW <= 5 || printableH <= 5) {
-      setStatus("El margen es demasiado grande para el tamaño de página elegido.");
+      setStatus(t("statusMarginTooBig"));
       return;
     }
     overlap = Math.min(overlap, Math.min(printableW, printableH) - 1);
@@ -256,11 +256,9 @@
     const totalPages = cols * rows;
 
     if (totalPages > MAX_PAGES_WITHOUT_CONFIRM) {
-      const ok = confirm(
-        `Este póster necesitará ${totalPages} hojas (${cols} × ${rows}). ¿Continuar de todas formas?`
-      );
+      const ok = confirm(t("confirmManyPages", totalPages, cols, rows));
       if (!ok) {
-        setStatus("Generación cancelada.");
+        setStatus(t("statusCancelled"));
         return;
       }
     }
@@ -276,7 +274,7 @@
       dpi = Math.max(50, Math.round(dpi * scale));
       posterWpx = mm2px(actualPosterWmm, dpi);
       posterHpx = mm2px(actualPosterHmm, dpi);
-      setStatus(`Póster muy grande: resolución ajustada automáticamente a ${dpi} dpi.`);
+      setStatus(t("statusResizedDpi", dpi));
     }
 
     const posterCanvas = buildPosterCanvas(posterWpx, posterHpx, effect, cellPxBase);
@@ -306,9 +304,12 @@
       octx.lineTo(overviewCanvas.width, y);
       octx.stroke();
     }
-    overviewCaption.textContent =
-      `Tamaño real: ${(actualPosterWmm / 10).toFixed(1)} × ${(actualPosterHmm / 10).toFixed(1)} cm` +
-      `  ·  ${cols} × ${rows} hojas (${totalPages} en total)  ·  ${dpi} dpi`;
+    overviewCaption.textContent = t(
+      "overviewCaption",
+      (actualPosterWmm / 10).toFixed(1),
+      (actualPosterHmm / 10).toFixed(1),
+      cols, rows, dpi
+    );
 
     // ----- páginas individuales -----
     pagesContainer.innerHTML = "";
@@ -337,11 +338,13 @@
           srcXpx, srcYpx, contentWpx, contentHpx,
           marginPx, marginPx, contentWpx, contentHpx
         );
+        const rowAbbr = t("rowAbbr");
+        const colAbbr = t("colAbbr");
         if (margin > 2) {
           drawCropMarks(pctx, marginPx, marginPx, marginPx + contentWpx, marginPx + contentHpx);
           pctx.fillStyle = "#999999";
           pctx.font = `${Math.max(10, marginPx * 0.6)}px monospace`;
-          pctx.fillText(`F${r + 1}-C${c + 1}`, 4, pageHpx - 4);
+          pctx.fillText(`${rowAbbr}${r + 1}-${colAbbr}${c + 1}`, 4, pageHpx - 4);
         }
 
         const card = document.createElement("div");
@@ -349,7 +352,7 @@
         card.appendChild(pageCanvas);
         const label = document.createElement("span");
         label.className = "page-label";
-        label.textContent = `Fila ${r + 1} / Col ${c + 1}`;
+        label.textContent = `${rowAbbr}${r + 1} / ${colAbbr}${c + 1}`;
         card.appendChild(label);
         pagesContainer.appendChild(card);
 
@@ -359,8 +362,8 @@
 
     injectPrintPageSize(pageWmm, pageHmm);
     stageToolbar.hidden = false;
-    pageCountText.textContent = `${totalPages} página${totalPages > 1 ? "s" : ""} lista${totalPages > 1 ? "s" : ""} para imprimir`;
-    setStatus(`Listo · ${cols} × ${rows} hojas · ${dpi} dpi`);
+    pageCountText.textContent = t("pageCount", totalPages);
+    setStatus(t("statusReady", cols, rows, dpi));
   }
 
   generateBtn.addEventListener("click", generate);
@@ -372,7 +375,7 @@
   pdfBtn.addEventListener("click", async () => {
     if (!generatedPages.length) return;
     pdfBtn.disabled = true;
-    pdfBtn.textContent = "Generando PDF…";
+    pdfBtn.textContent = t("pdfBtnGenerating");
     try {
       const { jsPDF } = window.jspdf;
       const first = generatedPages[0];
@@ -391,10 +394,15 @@
       doc.save("poster.pdf");
     } catch (err) {
       console.error(err);
-      alert("No se pudo generar el PDF: " + err.message);
+      alert(t("pdfError", err.message));
     } finally {
       pdfBtn.disabled = false;
-      pdfBtn.textContent = "⬇️ Descargar PDF";
+      pdfBtn.textContent = "⬇️ " + t("pdfBtn");
     }
+  });
+
+  // ---------- cambio de idioma ----------
+  document.addEventListener("languagechange", () => {
+    if (img) generate();
   });
 })();

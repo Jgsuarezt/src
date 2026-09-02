@@ -23,8 +23,79 @@ body {
   padding: 24px 32px 12px;
   border-bottom: 1px solid var(--border);
 }
+.topbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
 .topbar h1 { margin: 0 0 4px; font-size: 1.6rem; }
 .tagline { margin: 0; color: var(--text-dim); font-size: 0.95rem; }
+
+.lang-switch {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.lang-switch:focus { outline: 1px solid var(--accent); }
+
+/* ---------- selector de idioma inicial ---------- */
+.lang-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 7, 10, 0.88);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.lang-overlay.visible { display: flex; }
+.lang-modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+}
+.lang-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.lang-modal-sub {
+  margin: 0 0 22px;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+.lang-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.lang-option {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 12px 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.lang-option:hover, .lang-option:focus-visible {
+  border-color: var(--accent);
+  background: rgba(255, 90, 60, 0.08);
+  outline: none;
+}
 
 .layout {
   display: grid;
