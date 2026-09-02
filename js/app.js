@@ -59,21 +59,73 @@
     return [w, h];
   }
 
-  // ---------- carga de imagen ----------
+  // ---------- carga de imagen / PDF ----------
+  function applyLoadedImage(image) {
+    img = image;
+    imgAspect = image.naturalWidth / image.naturalHeight;
+    thumb.src = image.src;
+    thumb.hidden = false;
+    dropzoneText.hidden = true;
+    generateBtn.disabled = false;
+    if (lockAspect.checked) syncHeightFromWidth();
+  }
+
+  const isPdfFile = (file) => file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+
+  // Renderiza la primera página del PDF a un canvas y lo devuelve como
+  // HTMLImageElement, para que el resto del código lo trate como una imagen más.
+  async function pdfFirstPageToImage(file) {
+    if (!window.pdfjsLib) {
+      throw new Error(t("pdfLibMissing"));
+    }
+    const buffer = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: buffer }).promise;
+    const page = await pdf.getPage(1);
+    const baseViewport = page.getViewport({ scale: 1 });
+    const targetLongSide = 2200;
+    const scale = targetLongSide / Math.max(baseViewport.width, baseViewport.height);
+    const viewport = page.getViewport({ scale });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = canvas.toDataURL("image/png");
+    });
+  }
+
   function loadFile(file) {
-    if (!file || !file.type.startsWith("image/")) return;
+    if (!file) return;
+
+    if (isPdfFile(file)) {
+      setStatus(t("statusLoadingPdf"));
+      pdfFirstPageToImage(file)
+        .then((image) => {
+          applyLoadedImage(image);
+          setStatus(t("statusPdfLoaded", image.naturalWidth, image.naturalHeight));
+        })
+        .catch((err) => {
+          console.error(err);
+          setStatus(t("statusPdfError", err.message));
+        });
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       const image = new Image();
       image.onload = () => {
-        img = image;
-        imgAspect = image.naturalWidth / image.naturalHeight;
-        thumb.src = e.target.result;
-        thumb.hidden = false;
-        dropzoneText.hidden = true;
-        generateBtn.disabled = false;
+        applyLoadedImage(image);
         setStatus(t("statusImageLoaded", image.naturalWidth, image.naturalHeight));
-        if (lockAspect.checked) syncHeightFromWidth();
       };
       image.src = e.target.result;
     };
