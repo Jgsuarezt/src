@@ -33,36 +33,15 @@
     <div class="field-group">
       <h2><span class="step-no">1.</span> <span id="txt-step1Title"></span></h2>
       <label class="dropzone" id="dropzone">
-        <input type="file" id="fileInput" accept="image/*,application/pdf" hidden>
+        <input type="file" id="fileInput" accept="image/png,image/jpeg" hidden>
         <span id="dropzoneText"></span>
-        <img id="thumb" alt="" hidden>
+        <canvas id="thumbCanvas" hidden></canvas>
       </label>
+      <p class="hint" id="thumbGridCaption"></p>
     </div>
 
     <div class="field-group">
       <h2><span class="step-no">2.</span> <span id="txt-step2Title"></span></h2>
-      <div class="row">
-        <label><span id="txt-fieldWidth"></span>
-          <div class="unit-input">
-            <input type="number" id="posterW" value="100" min="5" step="1">
-            <span>cm</span>
-          </div>
-        </label>
-        <label><span id="txt-fieldHeight"></span>
-          <div class="unit-input">
-            <input type="number" id="posterH" value="70" min="5" step="1">
-            <span>cm</span>
-          </div>
-        </label>
-      </div>
-      <label class="checkbox-row">
-        <input type="checkbox" id="lockAspect" checked>
-        <span id="txt-lockAspect"></span>
-      </label>
-    </div>
-
-    <div class="field-group">
-      <h2><span class="step-no">3.</span> <span id="txt-step3Title"></span></h2>
       <div class="row">
         <label><span id="txt-fieldPaperSize"></span>
           <select id="pageSize">
@@ -93,6 +72,13 @@
           </div>
         </label>
       </div>
+    </div>
+
+    <div class="field-group">
+      <h2><span class="step-no">3.</span> <span id="txt-step3Title"></span></h2>
+      <label><span id="txt-fieldSheetsWide"></span>
+        <input type="number" id="sheetsWide" value="4" min="1" max="30" step="1">
+      </label>
     </div>
 
     <div class="field-group">
@@ -152,7 +138,6 @@
 <footer class="foot" id="txt-footer"></footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 </body>

@@ -16,10 +16,9 @@
   const fileInput = $("fileInput");
   const dropzone = $("dropzone");
   const dropzoneText = $("dropzoneText");
-  const thumb = $("thumb");
-  const posterW = $("posterW");
-  const posterH = $("posterH");
-  const lockAspect = $("lockAspect");
+  const thumbCanvas = $("thumbCanvas");
+  const thumbGridCaption = $("thumbGridCaption");
+  const sheetsWideInput = $("sheetsWide");
   const pageSizeSel = $("pageSize");
   const orientationSel = $("orientation");
   const marginInput = $("margin");
@@ -59,73 +58,84 @@
     return [w, h];
   }
 
-  // ---------- carga de imagen / PDF ----------
-  function applyLoadedImage(image) {
-    img = image;
-    imgAspect = image.naturalWidth / image.naturalHeight;
-    thumb.src = image.src;
-    thumb.hidden = false;
+  // A partir del papel elegido, el margen/solape y cuántas hojas de ancho
+  // quiere el usuario, calcula la rejilla completa. El alto en hojas se
+  // deriva de la proporción de la imagen, así que no hay que pedirlo aparte.
+  function computeGrid() {
+    const cols = Math.max(1, parseInt(sheetsWideInput.value, 10) || 1);
+    const margin = Math.max(0, parseFloat(marginInput.value) || 0);
+    let overlap = Math.max(0, parseFloat(overlapInput.value) || 0);
+    const [pageWmm, pageHmm] = currentPageSizeMm();
+    const printableW = pageWmm - 2 * margin;
+    const printableH = pageHmm - 2 * margin;
+    if (printableW <= 5 || printableH <= 5) return null;
+    overlap = Math.min(overlap, Math.min(printableW, printableH) - 1);
+
+    const stepW = printableW - overlap;
+    const stepH = printableH - overlap;
+    const actualPosterWmm = cols * stepW + overlap;
+    const rows = img
+      ? Math.max(1, Math.ceil((actualPosterWmm / imgAspect - overlap) / stepH))
+      : 1;
+    const actualPosterHmm = rows * stepH + overlap;
+
+    return { cols, rows, margin, overlap, stepW, stepH, pageWmm, pageHmm, printableW, printableH, actualPosterWmm, actualPosterHmm };
+  }
+
+  // ---------- vista previa con rejilla sobre la imagen subida ----------
+  function renderThumbGrid() {
+    if (!img) return;
+    const grid = computeGrid();
+    if (!grid) return;
+    const { cols, rows, stepW, stepH, overlap, actualPosterWmm, actualPosterHmm } = grid;
+
+    const cw = 300;
+    const ch = Math.max(1, Math.round(cw * (actualPosterHmm / actualPosterWmm)));
+    thumbCanvas.width = cw;
+    thumbCanvas.height = ch;
+    thumbCanvas.hidden = false;
     dropzoneText.hidden = true;
-    generateBtn.disabled = false;
-    if (lockAspect.checked) syncHeightFromWidth();
-  }
 
-  const isPdfFile = (file) => file.type === "application/pdf" || /\.pdf$/i.test(file.name);
-
-  // Renderiza la primera página del PDF a un canvas y lo devuelve como
-  // HTMLImageElement, para que el resto del código lo trate como una imagen más.
-  async function pdfFirstPageToImage(file) {
-    if (!window.pdfjsLib) {
-      throw new Error(t("pdfLibMissing"));
+    const ctx = thumbCanvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, cw, ch);
+    ctx.strokeStyle = "rgba(255,90,60,0.9)";
+    ctx.lineWidth = 1;
+    for (let c = 1; c < cols; c++) {
+      const x = ((c * stepW + overlap / 2) / actualPosterWmm) * cw;
+      ctx.beginPath();
+      ctx.moveTo(x + 0.5, 0);
+      ctx.lineTo(x + 0.5, ch);
+      ctx.stroke();
     }
-    const buffer = await file.arrayBuffer();
-    const pdf = await window.pdfjsLib.getDocument({ data: buffer }).promise;
-    const page = await pdf.getPage(1);
-    const baseViewport = page.getViewport({ scale: 1 });
-    const targetLongSide = 2200;
-    const scale = targetLongSide / Math.max(baseViewport.width, baseViewport.height);
-    const viewport = page.getViewport({ scale });
+    for (let r = 1; r < rows; r++) {
+      const y = ((r * stepH + overlap / 2) / actualPosterHmm) * ch;
+      ctx.beginPath();
+      ctx.moveTo(0, y + 0.5);
+      ctx.lineTo(cw, y + 0.5);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "rgba(255,90,60,0.9)";
+    ctx.strokeRect(0.5, 0.5, cw - 1, ch - 1);
 
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(viewport.width);
-    canvas.height = Math.round(viewport.height);
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    await page.render({ canvasContext: ctx, viewport }).promise;
-
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = reject;
-      image.src = canvas.toDataURL("image/png");
-    });
+    thumbGridCaption.textContent = t("sheetsGridCaption", cols, rows);
   }
 
+  // ---------- carga de imagen ----------
   function loadFile(file) {
     if (!file) return;
-
-    if (isPdfFile(file)) {
-      setStatus(t("statusLoadingPdf"));
-      pdfFirstPageToImage(file)
-        .then((image) => {
-          applyLoadedImage(image);
-          setStatus(t("statusPdfLoaded", image.naturalWidth, image.naturalHeight));
-        })
-        .catch((err) => {
-          console.error(err);
-          setStatus(t("statusPdfError", err.message));
-        });
+    if (file.type !== "image/png" && file.type !== "image/jpeg") {
+      setStatus(t("statusUnsupportedFile"));
       return;
     }
-
-    if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       const image = new Image();
       image.onload = () => {
-        applyLoadedImage(image);
+        img = image;
+        imgAspect = image.naturalWidth / image.naturalHeight;
+        generateBtn.disabled = false;
         setStatus(t("statusImageLoaded", image.naturalWidth, image.naturalHeight));
+        renderThumbGrid();
       };
       image.src = e.target.result;
     };
@@ -153,23 +163,10 @@
     if (file) loadFile(file);
   });
 
-  // ---------- aspecto ligado ----------
-  function syncHeightFromWidth() {
-    if (!img) return;
-    posterH.value = (parseFloat(posterW.value || 0) / imgAspect).toFixed(1);
-  }
-  function syncWidthFromHeight() {
-    if (!img) return;
-    posterW.value = (parseFloat(posterH.value || 0) * imgAspect).toFixed(1);
-  }
-  posterW.addEventListener("input", () => {
-    if (lockAspect.checked) syncHeightFromWidth();
-  });
-  posterH.addEventListener("input", () => {
-    if (lockAspect.checked) syncWidthFromHeight();
-  });
-  lockAspect.addEventListener("change", () => {
-    if (lockAspect.checked) syncHeightFromWidth();
+  // ---------- controles que afectan la rejilla ----------
+  [sheetsWideInput, pageSizeSel, orientationSel, marginInput, overlapInput].forEach((el) => {
+    el.addEventListener("input", renderThumbGrid);
+    el.addEventListener("change", renderThumbGrid);
   });
 
   // ---------- efecto trama ----------
@@ -283,28 +280,15 @@
   }
 
   function doGenerate() {
-    const posterWmm = parseFloat(posterW.value) * 10;
-    const posterHmm = parseFloat(posterH.value) * 10;
-    const margin = Math.max(0, parseFloat(marginInput.value) || 0);
-    let overlap = Math.max(0, parseFloat(overlapInput.value) || 0);
-    const effect = effectSel.value;
-    const cellPxBase = parseInt(dotSize.value, 10);
-    let dpi = parseInt(dpiSel.value, 10);
-
-    let [pageWmm, pageHmm] = currentPageSizeMm();
-    const printableW = pageWmm - 2 * margin;
-    const printableH = pageHmm - 2 * margin;
-    if (printableW <= 5 || printableH <= 5) {
+    const grid = computeGrid();
+    if (!grid) {
       setStatus(t("statusMarginTooBig"));
       return;
     }
-    overlap = Math.min(overlap, Math.min(printableW, printableH) - 1);
-
-    const stepW = printableW - overlap;
-    const stepH = printableH - overlap;
-
-    const cols = Math.max(1, Math.ceil((posterWmm - overlap) / stepW));
-    const rows = Math.max(1, Math.ceil((posterHmm - overlap) / stepH));
+    const { cols, rows, margin, overlap, stepW, stepH, pageWmm, pageHmm, printableW, printableH, actualPosterWmm, actualPosterHmm } = grid;
+    const effect = effectSel.value;
+    const cellPxBase = parseInt(dotSize.value, 10);
+    let dpi = parseInt(dpiSel.value, 10);
     const totalPages = cols * rows;
 
     if (totalPages > MAX_PAGES_WITHOUT_CONFIRM) {
@@ -314,9 +298,6 @@
         return;
       }
     }
-
-    const actualPosterWmm = cols * stepW + overlap;
-    const actualPosterHmm = rows * stepH + overlap;
 
     let posterWpx = mm2px(actualPosterWmm, dpi);
     let posterHpx = mm2px(actualPosterHmm, dpi);
@@ -371,6 +352,8 @@
     const marginPx = mm2px(margin, dpi);
     const contentWpx = mm2px(printableW, dpi);
     const contentHpx = mm2px(printableH, dpi);
+    const rowAbbr = t("rowAbbr");
+    const colAbbr = t("colAbbr");
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -390,8 +373,6 @@
           srcXpx, srcYpx, contentWpx, contentHpx,
           marginPx, marginPx, contentWpx, contentHpx
         );
-        const rowAbbr = t("rowAbbr");
-        const colAbbr = t("colAbbr");
         if (margin > 2) {
           drawCropMarks(pctx, marginPx, marginPx, marginPx + contentWpx, marginPx + contentHpx);
           pctx.fillStyle = "#999999";
@@ -455,6 +436,7 @@
 
   // ---------- cambio de idioma ----------
   document.addEventListener("languagechange", () => {
+    renderThumbGrid();
     if (img) generate();
   });
 })();
