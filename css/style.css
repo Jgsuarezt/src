@@ -182,6 +182,39 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   flex: none;
 }
 
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.checkbox-row input { width: auto; }
+.checkbox-row span:not(.hint-badge) { color: var(--text); font-size: 0.9rem; }
+
+.hint-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  cursor: help;
+  flex: none;
+}
+.hint-badge:hover, .hint-badge:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.hint-caption {
+  margin: 4px 0 0 24px;
+  font-size: 0.76rem;
+  color: var(--accent);
+}
+
 .dropzone {
   display: flex;
   align-items: center;

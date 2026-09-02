@@ -28,6 +28,8 @@
   const dotSizeValue = $("dotSizeValue");
   const dotSizeLabel = $("dotSizeLabel");
   const dpiSel = $("dpi");
+  const cropMarksToggle = $("cropMarksToggle");
+  const pagePositionToggle = $("pagePositionToggle");
   const generateBtn = $("generateBtn");
   const statusText = $("statusText");
   const scaleCompareCanvas = $("scaleCompareCanvas");
@@ -164,7 +166,7 @@
     const posterHcm = imageHmm / 10;
     const personHeightCm = 180;
 
-    const cssW = 320;
+    const cssW = 460;
     const cssH = 260;
     const dpr = window.devicePixelRatio || 1;
     scaleCompareCanvas.width = cssW * dpr;
@@ -177,17 +179,28 @@
 
     const baseline = cssH - 38;
     const drawableH = baseline - 10;
-    const maxCm = Math.max(personHeightCm, posterHcm, 1);
-    const pxPerCm = drawableH / maxCm;
+    const sideMargin = 8;
+    const gap = 30;
+    const personAspect = 0.32; // ancho/alto aproximado de la silueta
+
+    // La escala primero se limita por el alto disponible; si aun así el
+    // ancho combinado (persona + póster) no cabe, se reduce más — así la
+    // persona se achica junto con el póster para que todo sea visible,
+    // aunque la etiqueta siga diciendo "1.80 m".
+    let pxPerCm = drawableH / Math.max(personHeightCm, posterHcm, 1);
+    const availW = cssW - sideMargin * 2;
+    const combinedWcm = personHeightCm * personAspect + posterWcm;
+    if (combinedWcm * pxPerCm + gap > availW) {
+      pxPerCm = Math.min(pxPerCm, (availW - gap) / combinedWcm);
+    }
 
     const personHpx = personHeightCm * pxPerCm;
-    const personWpx = personHpx * 0.32;
+    const personWpx = personHpx * personAspect;
     const posterHpx = posterHcm * pxPerCm;
     const posterWpx = Math.max(2, posterWcm * pxPerCm);
 
-    const gap = 30;
     const totalW = personWpx + gap + posterWpx;
-    const startX = Math.max(8, (cssW - totalW) / 2);
+    const startX = Math.max(sideMargin, (cssW - totalW) / 2);
     const personX = startX;
     const posterX = personX + personWpx + gap;
 
@@ -209,8 +222,8 @@
     ctx.strokeStyle = dim;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(8, baseline + 0.5);
-    ctx.lineTo(cssW - 8, baseline + 0.5);
+    ctx.moveTo(sideMargin, baseline + 0.5);
+    ctx.lineTo(cssW - sideMargin, baseline + 0.5);
     ctx.stroke();
 
     ctx.fillStyle = textColor;
@@ -433,6 +446,8 @@
     const contentHpx = mm2px(printableH, dpi);
     const rowAbbr = t("rowAbbr");
     const colAbbr = t("colAbbr");
+    const showCropMarks = cropMarksToggle.checked && margin > 2;
+    const showPagePosition = pagePositionToggle.checked;
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -452,8 +467,10 @@
           srcXpx, srcYpx, contentWpx, contentHpx,
           marginPx, marginPx, contentWpx, contentHpx
         );
-        if (margin > 2) {
+        if (showCropMarks) {
           drawCropMarks(pctx, marginPx, marginPx, marginPx + contentWpx, marginPx + contentHpx);
+        }
+        if (showPagePosition) {
           pctx.fillStyle = "#999999";
           pctx.font = `${Math.max(10, marginPx * 0.6)}px monospace`;
           pctx.fillText(`${rowAbbr}${r + 1}-${colAbbr}${c + 1}`, 4, pageHpx - 4);
@@ -462,10 +479,12 @@
         const card = document.createElement("div");
         card.className = "page-card";
         card.appendChild(pageCanvas);
-        const label = document.createElement("span");
-        label.className = "page-label";
-        label.textContent = `${rowAbbr}${r + 1} / ${colAbbr}${c + 1}`;
-        card.appendChild(label);
+        if (showPagePosition) {
+          const label = document.createElement("span");
+          label.className = "page-label";
+          label.textContent = `${rowAbbr}${r + 1} / ${colAbbr}${c + 1}`;
+          card.appendChild(label);
+        }
         pagesContainer.appendChild(card);
 
         generatedPages.push({ canvas: pageCanvas, wMm: pageWmm, hMm: pageHmm });
