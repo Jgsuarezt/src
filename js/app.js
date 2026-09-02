@@ -29,7 +29,6 @@
   const dotSizeLabel = $("dotSizeLabel");
   const dpiSel = $("dpi");
   const cropMarksToggle = $("cropMarksToggle");
-  const pagePositionToggle = $("pagePositionToggle");
   const generateBtn = $("generateBtn");
   const statusText = $("statusText");
   const scaleCompareCanvas = $("scaleCompareCanvas");
@@ -447,10 +446,7 @@
     const marginPx = mm2px(margin, dpi);
     const contentWpx = mm2px(printableW, dpi);
     const contentHpx = mm2px(printableH, dpi);
-    const rowAbbr = t("rowAbbr");
-    const colAbbr = t("colAbbr");
     const showCropMarks = cropMarksToggle.checked && margin > 2;
-    const showPagePosition = pagePositionToggle.checked;
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -473,21 +469,10 @@
         if (showCropMarks) {
           drawCropMarks(pctx, marginPx, marginPx, marginPx + contentWpx, marginPx + contentHpx);
         }
-        if (showPagePosition) {
-          pctx.fillStyle = "#999999";
-          pctx.font = `${Math.max(10, marginPx * 0.6)}px monospace`;
-          pctx.fillText(`${rowAbbr}${r + 1}-${colAbbr}${c + 1}`, 4, pageHpx - 4);
-        }
 
         const card = document.createElement("div");
         card.className = "page-card";
         card.appendChild(pageCanvas);
-        if (showPagePosition) {
-          const label = document.createElement("span");
-          label.className = "page-label";
-          label.textContent = `${rowAbbr}${r + 1} / ${colAbbr}${c + 1}`;
-          card.appendChild(label);
-        }
         pagesContainer.appendChild(card);
 
         generatedPages.push({ canvas: pageCanvas, wMm: pageWmm, hMm: pageHmm });
