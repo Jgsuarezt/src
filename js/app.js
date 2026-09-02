@@ -38,6 +38,7 @@
   const pagesContainer = $("pagesContainer");
   const printBtn = $("printBtn");
   const pdfBtn = $("pdfBtn");
+  const pdfBtnLabel = $("txt-pdfBtn");
 
   let img = null; // HTMLImageElement cargada
   let imgAspect = 1; // ancho / alto
@@ -227,7 +228,7 @@
     ctx.stroke();
 
     ctx.fillStyle = textColor;
-    ctx.font = "11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    ctx.font = "500 11px 'IBM Plex Mono', ui-monospace, monospace";
     ctx.textAlign = "center";
     ctx.fillText(t("scaleComparePerson"), personX + personWpx / 2, baseline + 18);
     ctx.fillText(
@@ -508,7 +509,7 @@
   pdfBtn.addEventListener("click", async () => {
     if (!generatedPages.length) return;
     pdfBtn.disabled = true;
-    pdfBtn.textContent = t("pdfBtnGenerating");
+    pdfBtnLabel.textContent = t("pdfBtnGenerating");
     try {
       const { jsPDF } = window.jspdf;
       const first = generatedPages[0];
@@ -530,7 +531,7 @@
       alert(t("pdfError", err.message));
     } finally {
       pdfBtn.disabled = false;
-      pdfBtn.textContent = "⬇️ " + t("pdfBtn");
+      pdfBtnLabel.textContent = t("pdfBtn");
     }
   });
 
