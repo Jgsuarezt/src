@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Posterizador — Convierte tu foto en un póster gigante</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>🖨️ Posterizador</h1>
+  <p class="tagline">Convierte cualquier imagen en un póster gigante impreso en varias hojas A4/Carta, al estilo Rasterbator.</p>
+</header>
+
+<main class="layout">
+
+  <!-- ==================== PANEL DE CONTROLES ==================== -->
+  <section class="panel" id="controls">
+
+    <div class="field-group">
+      <h2>1. Imagen</h2>
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept="image/*" hidden>
+        <span id="dropzoneText">Arrastra una imagen aquí o haz clic para elegirla</span>
+        <img id="thumb" alt="" hidden>
+      </label>
+    </div>
+
+    <div class="field-group">
+      <h2>2. Tamaño final del póster</h2>
+      <div class="row">
+        <label>Ancho
+          <div class="unit-input">
+            <input type="number" id="posterW" value="100" min="5" step="1">
+            <span>cm</span>
+          </div>
+        </label>
+        <label>Alto
+          <div class="unit-input">
+            <input type="number" id="posterH" value="70" min="5" step="1">
+            <span>cm</span>
+          </div>
+        </label>
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="lockAspect" checked>
+        Mantener proporción de la imagen
+      </label>
+    </div>
+
+    <div class="field-group">
+      <h2>3. Papel de impresión</h2>
+      <div class="row">
+        <label>Tamaño
+          <select id="pageSize">
+            <option value="A4" selected>A4 (210 × 297 mm)</option>
+            <option value="LETTER">Carta (215.9 × 279.4 mm)</option>
+            <option value="LEGAL">Legal (215.9 × 355.6 mm)</option>
+            <option value="A3">A3 (297 × 420 mm)</option>
+          </select>
+        </label>
+        <label>Orientación
+          <select id="orientation">
+            <option value="portrait" selected>Vertical</option>
+            <option value="landscape">Horizontal</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Margen de impresión
+          <div class="unit-input">
+            <input type="number" id="margin" value="5" min="0" step="1">
+            <span>mm</span>
+          </div>
+        </label>
+        <label>Solape para pegar
+          <div class="unit-input">
+            <input type="number" id="overlap" value="10" min="0" step="1">
+            <span>mm</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <h2>4. Efecto de trama</h2>
+      <label>Estilo
+        <select id="effect">
+          <option value="none">Ninguno (imagen normal)</option>
+          <option value="bw" selected>Puntos blanco y negro (clásico)</option>
+          <option value="color">Puntos a color</option>
+        </select>
+      </label>
+      <label id="dotSizeLabel">Tamaño de punto
+        <input type="range" id="dotSize" min="3" max="30" value="8">
+        <span id="dotSizeValue">8 px</span>
+      </label>
+    </div>
+
+    <div class="field-group">
+      <h2>5. Calidad</h2>
+      <label>Resolución de impresión
+        <select id="dpi">
+          <option value="100">Borrador (100 dpi, rápido)</option>
+          <option value="150" selected>Normal (150 dpi)</option>
+          <option value="300">Alta calidad (300 dpi, lento)</option>
+        </select>
+      </label>
+    </div>
+
+    <button id="generateBtn" class="primary-btn" disabled>Generar póster</button>
+    <p class="hint" id="statusText"></p>
+  </section>
+
+  <!-- ==================== PREVIEW / RESULTADO ==================== -->
+  <section class="stage" id="stage">
+
+    <div class="stage-empty" id="stageEmpty">
+      <p>Sube una imagen y pulsa <strong>Generar póster</strong> para ver aquí la vista previa página por página.</p>
+    </div>
+
+    <div class="stage-preview" id="stagePreview" hidden>
+      <canvas id="overviewCanvas"></canvas>
+      <p class="overview-caption" id="overviewCaption"></p>
+    </div>
+
+    <div class="stage-toolbar" id="stageToolbar" hidden>
+      <span id="pageCountText"></span>
+      <div class="spacer"></div>
+      <button id="printBtn" class="secondary-btn">🖨️ Imprimir</button>
+      <button id="pdfBtn" class="secondary-btn">⬇️ Descargar PDF</button>
+    </div>
+
+    <div id="pagesContainer" class="pages-container"></div>
+
+  </section>
+
+</main>
+
+<footer class="foot">
+  Todo el procesamiento ocurre en tu navegador: la imagen nunca se sube a ningún servidor.
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
