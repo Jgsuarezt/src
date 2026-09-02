@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Posterizer</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ==================== SELECTOR DE IDIOMA ==================== -->
+<div class="lang-overlay" id="langOverlay">
+  <div class="lang-modal">
+    <p class="lang-modal-title">Select your language</p>
+    <p class="lang-modal-sub">Elige tu idioma · Choisissez votre langue · Scegli la tua lingua · Escolha o seu idioma · Wähle deine Sprache · 选择语言</p>
+    <div class="lang-grid" id="langGrid"></div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="topbar-row">
+    <h1>🖨️ <span id="txt-appName">Posterizer</span></h1>
+    <select id="langSwitch" class="lang-switch" aria-label="Language"></select>
+  </div>
+  <p class="tagline" id="txt-tagline"></p>
+</header>
+
+<main class="layout">
+
+  <!-- ==================== PANEL DE CONTROLES ==================== -->
+  <section class="panel" id="controls">
+
+    <div class="field-group">
+      <h2><span class="step-no">1.</span> <span id="txt-step1Title"></span></h2>
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept="image/png,image/jpeg" hidden>
+        <span id="dropzoneText"></span>
+        <canvas id="thumbCanvas" hidden></canvas>
+      </label>
+      <p class="hint" id="thumbGridCaption"></p>
+    </div>
+
+    <div class="field-group">
+      <h2><span class="step-no">2.</span> <span id="txt-step2Title"></span></h2>
+      <div class="row">
+        <label><span id="txt-fieldPaperSize"></span>
+          <select id="pageSize">
+            <option value="A4" selected>A4 (210 × 297 mm)</option>
+            <option value="LETTER" id="opt-paperLetter">Letter (215.9 × 279.4 mm)</option>
+            <option value="LEGAL" id="opt-paperLegal">Legal (215.9 × 355.6 mm)</option>
+            <option value="A3">A3 (297 × 420 mm)</option>
+          </select>
+        </label>
+        <label><span id="txt-fieldOrientation"></span>
+          <select id="orientation">
+            <option value="portrait" selected id="opt-orientationPortrait">Portrait</option>
+            <option value="landscape" id="opt-orientationLandscape">Landscape</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label><span id="txt-fieldMargin"></span>
+          <div class="unit-input">
+            <input type="number" id="margin" value="5" min="0" step="1">
+            <span>mm</span>
+          </div>
+        </label>
+        <label><span id="txt-fieldOverlap"></span>
+          <div class="unit-input">
+            <input type="number" id="overlap" value="10" min="0" step="1">
+            <span>mm</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <h2><span class="step-no">3.</span> <span id="txt-step3Title"></span></h2>
+      <label><span id="txt-fieldSheetsWide"></span>
+        <input type="number" id="sheetsWide" value="4" min="1" max="30" step="1">
+      </label>
+    </div>
+
+    <div class="field-group">
+      <h2><span class="step-no">4.</span> <span id="txt-step4Title"></span></h2>
+      <label><span id="txt-fieldStyle"></span>
+        <select id="effect">
+          <option value="none" id="opt-effectNone">None</option>
+          <option value="bw" selected id="opt-effectBw">Black &amp; white dots</option>
+          <option value="color" id="opt-effectColor">Color dots</option>
+        </select>
+      </label>
+      <label id="dotSizeLabel"><span id="txt-fieldDotSize"></span> <span id="dotSizeValue" class="mono">8px</span>
+        <div class="range-row">
+          <span class="range-edge-label" id="txt-dotQualityHigh"></span>
+          <input type="range" id="dotSize" min="3" max="30" value="8">
+          <span class="range-edge-label" id="txt-dotQualityLow"></span>
+        </div>
+      </label>
+    </div>
+
+    <div class="field-group">
+      <h2><span class="step-no">5.</span> <span id="txt-step5Title"></span></h2>
+      <label><span id="txt-fieldResolution"></span>
+        <select id="dpi">
+          <option value="100" id="opt-dpiDraft">Draft (100 dpi)</option>
+          <option value="150" selected id="opt-dpiNormal">Normal (150 dpi)</option>
+          <option value="300" id="opt-dpiHigh">High (300 dpi)</option>
+        </select>
+      </label>
+    </div>
+
+    <button id="generateBtn" class="primary-btn" disabled></button>
+    <p class="hint" id="statusText"></p>
+  </section>
+
+  <!-- ==================== PREVIEW / RESULTADO ==================== -->
+  <section class="stage" id="stage">
+
+    <div class="stage-empty" id="stageEmpty">
+      <p id="txt-stageEmpty"></p>
+    </div>
+
+    <div class="stage-preview" id="stagePreview" hidden>
+      <canvas id="overviewCanvas"></canvas>
+      <p class="overview-caption" id="overviewCaption"></p>
+    </div>
+
+    <div class="stage-toolbar" id="stageToolbar" hidden>
+      <span id="pageCountText"></span>
+      <div class="spacer"></div>
+      <button id="printBtn" class="secondary-btn"></button>
+      <button id="pdfBtn" class="secondary-btn"></button>
+    </div>
+
+    <div id="pagesContainer" class="pages-container"></div>
+
+  </section>
+
+</main>
+
+<footer class="foot" id="txt-footer"></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
