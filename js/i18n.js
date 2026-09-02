@@ -489,8 +489,6 @@
     document.title = t("pageTitle");
     document.getElementById("dropzoneText").textContent = t("dropzoneText");
     document.getElementById("generateBtn").textContent = t("generateBtn");
-    document.getElementById("printBtn").textContent = "🖨️ " + t("printBtn");
-    document.getElementById("pdfBtn").textContent = "⬇️ " + t("pdfBtn");
 
     const paperOptA4 = document.querySelector('#pageSize option[value="A4"]');
     if (paperOptA4) paperOptA4.textContent = `${t("paperA4")} (210 × 297 mm)`;
