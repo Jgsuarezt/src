@@ -182,6 +182,39 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   flex: none;
 }
 
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.checkbox-row input { width: auto; }
+.checkbox-row span:not(.hint-badge) { color: var(--text); font-size: 0.9rem; }
+
+.hint-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  cursor: help;
+  flex: none;
+}
+.hint-badge:hover, .hint-badge:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.hint-caption {
+  margin: 4px 0 0 24px;
+  font-size: 0.76rem;
+  color: var(--accent);
+}
+
 .dropzone {
   display: flex;
   align-items: center;
@@ -243,32 +276,25 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   padding: 20px 32px;
 }
 
-.stage-empty {
-  color: var(--text-dim);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.stage-preview {
+.scale-compare {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 16px 16px 8px;
   margin-bottom: 16px;
   text-align: center;
 }
-#overviewCanvas {
-  max-width: 100%;
-  max-height: 420px;
-  border: 1px solid var(--border);
-  background: #fff;
-}
-.overview-caption {
+.scale-compare h2 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--text-dim);
-  font-size: 0.8rem;
-  margin: 10px 0 0;
+  margin: 0 0 8px;
+  text-align: left;
+}
+#scaleCompareCanvas {
+  max-width: 100%;
+  height: auto;
 }
 
 .stage-toolbar {
@@ -281,10 +307,10 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 }
 .stage-toolbar .spacer { flex: 1; }
 
+/* Las páginas generadas ya no se muestran en pantalla (era la parte lenta
+   de renderizar); el grid solo se activa para @media print más abajo. */
 .pages-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
+  display: none;
 }
 
 .page-card {
@@ -317,7 +343,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 
 /* ==================== PRINT ==================== */
 @media print {
-  .topbar, .panel, .stage-empty, .stage-preview, .stage-toolbar, .foot {
+  .topbar, .panel, .scale-compare, .stage-toolbar, .foot {
     display: none !important;
   }
   body, .layout, .stage { background: #fff; margin: 0; padding: 0; }

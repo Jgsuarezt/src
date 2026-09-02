@@ -28,12 +28,11 @@
   const dotSizeValue = $("dotSizeValue");
   const dotSizeLabel = $("dotSizeLabel");
   const dpiSel = $("dpi");
+  const cropMarksToggle = $("cropMarksToggle");
+  const pagePositionToggle = $("pagePositionToggle");
   const generateBtn = $("generateBtn");
   const statusText = $("statusText");
-  const stageEmpty = $("stageEmpty");
-  const stagePreview = $("stagePreview");
-  const overviewCanvas = $("overviewCanvas");
-  const overviewCaption = $("overviewCaption");
+  const scaleCompareCanvas = $("scaleCompareCanvas");
   const stageToolbar = $("stageToolbar");
   const pageCountText = $("pageCountText");
   const pagesContainer = $("pagesContainer");
@@ -124,6 +123,120 @@
     thumbGridCaption.textContent = t("sheetsGridCaption", cols, rows);
   }
 
+  // Dibuja una silueta humana de 1.80 m junto a un rectángulo a la misma
+  // escala representando el póster, para que el tamaño real se entienda de
+  // un vistazo sin tener que generar ni renderizar el póster completo.
+  function drawPersonSilhouette(ctx, x, baseline, w, h, color) {
+    ctx.save();
+    ctx.translate(x, baseline - h);
+    ctx.fillStyle = color;
+
+    const headR = h * 0.075;
+    const headCx = w * 0.5;
+    ctx.beginPath();
+    ctx.arc(headCx, headR, headR, 0, Math.PI * 2);
+    ctx.fill();
+
+    const shoulderY = headR * 2.1;
+    const shoulderHalf = w * 0.34;
+    const hipY = h * 0.5;
+    const hipHalf = w * 0.19;
+    ctx.beginPath();
+    ctx.moveTo(headCx - shoulderHalf, shoulderY);
+    ctx.lineTo(headCx + shoulderHalf, shoulderY);
+    ctx.lineTo(headCx + hipHalf, hipY);
+    ctx.lineTo(headCx - hipHalf, hipY);
+    ctx.closePath();
+    ctx.fill();
+
+    const legGap = w * 0.05;
+    const legW = w * 0.15;
+    const legBottom = h * 0.98;
+    ctx.fillRect(headCx - legGap / 2 - legW, hipY, legW, legBottom - hipY);
+    ctx.fillRect(headCx + legGap / 2, hipY, legW, legBottom - hipY);
+
+    ctx.restore();
+  }
+
+  function renderScaleCompare() {
+    const grid = computeGrid();
+    if (!grid) return;
+    const { posterWmm, imageHmm } = grid;
+    const posterWcm = posterWmm / 10;
+    const posterHcm = imageHmm / 10;
+    const personHeightCm = 180;
+
+    const cssW = 460;
+    const cssH = 260;
+    const dpr = window.devicePixelRatio || 1;
+    scaleCompareCanvas.width = cssW * dpr;
+    scaleCompareCanvas.height = cssH * dpr;
+    scaleCompareCanvas.style.width = cssW + "px";
+    scaleCompareCanvas.style.height = cssH + "px";
+    const ctx = scaleCompareCanvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    const baseline = cssH - 38;
+    const drawableH = baseline - 10;
+    const sideMargin = 8;
+    const gap = 30;
+    const personAspect = 0.32; // ancho/alto aproximado de la silueta
+
+    // La escala primero se limita por el alto disponible; si aun así el
+    // ancho combinado (persona + póster) no cabe, se reduce más — así la
+    // persona se achica junto con el póster para que todo sea visible,
+    // aunque la etiqueta siga diciendo "1.80 m".
+    let pxPerCm = drawableH / Math.max(personHeightCm, posterHcm, 1);
+    const availW = cssW - sideMargin * 2;
+    const combinedWcm = personHeightCm * personAspect + posterWcm;
+    if (combinedWcm * pxPerCm + gap > availW) {
+      pxPerCm = Math.min(pxPerCm, (availW - gap) / combinedWcm);
+    }
+
+    const personHpx = personHeightCm * pxPerCm;
+    const personWpx = personHpx * personAspect;
+    const posterHpx = posterHcm * pxPerCm;
+    const posterWpx = Math.max(2, posterWcm * pxPerCm);
+
+    const totalW = personWpx + gap + posterWpx;
+    const startX = Math.max(sideMargin, (cssW - totalW) / 2);
+    const personX = startX;
+    const posterX = personX + personWpx + gap;
+
+    const styles = getComputedStyle(document.documentElement);
+    const accent = styles.getPropertyValue("--accent").trim() || "#ff5a3c";
+    const dim = styles.getPropertyValue("--text-dim").trim() || "#9aa1ac";
+    const textColor = styles.getPropertyValue("--text").trim() || "#e8eaed";
+
+    drawPersonSilhouette(ctx, personX, baseline, personWpx, personHpx, dim);
+
+    ctx.fillStyle = "rgba(255,90,60,0.14)";
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.rect(posterX, baseline - posterHpx, posterWpx, posterHpx);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = dim;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(sideMargin, baseline + 0.5);
+    ctx.lineTo(cssW - sideMargin, baseline + 0.5);
+    ctx.stroke();
+
+    ctx.fillStyle = textColor;
+    ctx.font = "11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(t("scaleComparePerson"), personX + personWpx / 2, baseline + 18);
+    ctx.fillText(
+      t("scaleComparePoster", posterWcm.toFixed(0), posterHcm.toFixed(0)),
+      posterX + posterWpx / 2,
+      baseline + 18
+    );
+  }
+
   // ---------- carga de imagen ----------
   function loadFile(file) {
     if (!file) return;
@@ -140,6 +253,7 @@
         generateBtn.disabled = false;
         setStatus(t("statusImageLoaded", image.naturalWidth, image.naturalHeight));
         renderThumbGrid();
+        renderScaleCompare();
       };
       image.src = e.target.result;
     };
@@ -169,8 +283,8 @@
 
   // ---------- controles que afectan la rejilla ----------
   [sheetsWideInput, pageSizeSel, orientationSel, marginInput, overlapInput].forEach((el) => {
-    el.addEventListener("input", renderThumbGrid);
-    el.addEventListener("change", renderThumbGrid);
+    el.addEventListener("input", () => { renderThumbGrid(); renderScaleCompare(); });
+    el.addEventListener("change", () => { renderThumbGrid(); renderScaleCompare(); });
   });
 
   // ---------- efecto trama ----------
@@ -293,7 +407,7 @@
       setStatus(t("statusMarginTooBig"));
       return;
     }
-    const { cols, rows, margin, overlap, stepW, stepH, pageWmm, pageHmm, printableW, printableH, posterWmm, imageHmm, gridHmm } = grid;
+    const { cols, rows, margin, stepW, stepH, pageWmm, pageHmm, printableW, printableH, posterWmm, imageHmm, gridHmm } = grid;
     const effect = effectSel.value;
     const cellPxBase = parseInt(dotSize.value, 10);
     let dpi = parseInt(dpiSel.value, 10);
@@ -322,38 +436,6 @@
 
     const posterCanvas = buildPosterCanvas(posterWpx, posterHpx, imageHpx, effect, cellPxBase);
 
-    // ----- vista general -----
-    stageEmpty.hidden = true;
-    stagePreview.hidden = false;
-    const maxPreview = 800;
-    const previewScale = Math.min(1, maxPreview / posterWpx);
-    overviewCanvas.width = posterWpx * previewScale;
-    overviewCanvas.height = posterHpx * previewScale;
-    const octx = overviewCanvas.getContext("2d");
-    octx.drawImage(posterCanvas, 0, 0, overviewCanvas.width, overviewCanvas.height);
-    octx.strokeStyle = "rgba(255,90,60,0.8)";
-    octx.lineWidth = 1;
-    for (let c = 1; c < cols; c++) {
-      const x = mm2px(c * stepW + overlap / 2, dpi) * previewScale;
-      octx.beginPath();
-      octx.moveTo(x, 0);
-      octx.lineTo(x, overviewCanvas.height);
-      octx.stroke();
-    }
-    for (let r = 1; r < rows; r++) {
-      const y = mm2px(r * stepH + overlap / 2, dpi) * previewScale;
-      octx.beginPath();
-      octx.moveTo(0, y);
-      octx.lineTo(overviewCanvas.width, y);
-      octx.stroke();
-    }
-    overviewCaption.textContent = t(
-      "overviewCaption",
-      (posterWmm / 10).toFixed(1),
-      (imageHmm / 10).toFixed(1),
-      cols, rows, dpi
-    );
-
     // ----- páginas individuales -----
     pagesContainer.innerHTML = "";
     generatedPages = [];
@@ -364,6 +446,8 @@
     const contentHpx = mm2px(printableH, dpi);
     const rowAbbr = t("rowAbbr");
     const colAbbr = t("colAbbr");
+    const showCropMarks = cropMarksToggle.checked && margin > 2;
+    const showPagePosition = pagePositionToggle.checked;
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -383,8 +467,10 @@
           srcXpx, srcYpx, contentWpx, contentHpx,
           marginPx, marginPx, contentWpx, contentHpx
         );
-        if (margin > 2) {
+        if (showCropMarks) {
           drawCropMarks(pctx, marginPx, marginPx, marginPx + contentWpx, marginPx + contentHpx);
+        }
+        if (showPagePosition) {
           pctx.fillStyle = "#999999";
           pctx.font = `${Math.max(10, marginPx * 0.6)}px monospace`;
           pctx.fillText(`${rowAbbr}${r + 1}-${colAbbr}${c + 1}`, 4, pageHpx - 4);
@@ -393,10 +479,12 @@
         const card = document.createElement("div");
         card.className = "page-card";
         card.appendChild(pageCanvas);
-        const label = document.createElement("span");
-        label.className = "page-label";
-        label.textContent = `${rowAbbr}${r + 1} / ${colAbbr}${c + 1}`;
-        card.appendChild(label);
+        if (showPagePosition) {
+          const label = document.createElement("span");
+          label.className = "page-label";
+          label.textContent = `${rowAbbr}${r + 1} / ${colAbbr}${c + 1}`;
+          card.appendChild(label);
+        }
         pagesContainer.appendChild(card);
 
         generatedPages.push({ canvas: pageCanvas, wMm: pageWmm, hMm: pageHmm });
@@ -447,6 +535,9 @@
   // ---------- cambio de idioma ----------
   document.addEventListener("languagechange", () => {
     renderThumbGrid();
+    renderScaleCompare();
     if (img) generate();
   });
+
+  document.addEventListener("DOMContentLoaded", renderScaleCompare);
 })();

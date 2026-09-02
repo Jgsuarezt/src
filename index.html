@@ -110,6 +110,23 @@
       </label>
     </div>
 
+    <div class="field-group">
+      <h2><span class="step-no">6.</span> <span id="txt-step6Title"></span></h2>
+      <label class="checkbox-row">
+        <input type="checkbox" id="cropMarksToggle" checked>
+        <span id="txt-fieldCropMarks"></span>
+        <span class="hint-badge" id="hint-cropMarksHint" tabindex="0">?</span>
+      </label>
+      <p class="hint-caption" id="txt-cropMarksHint"></p>
+
+      <label class="checkbox-row" style="margin-top:12px;">
+        <input type="checkbox" id="pagePositionToggle" checked>
+        <span id="txt-fieldPagePosition"></span>
+        <span class="hint-badge" id="hint-pagePositionHint" tabindex="0">?</span>
+      </label>
+      <p class="hint-caption" id="txt-pagePositionHint"></p>
+    </div>
+
     <button id="generateBtn" class="primary-btn" disabled></button>
     <p class="hint" id="statusText"></p>
   </section>
@@ -117,13 +134,9 @@
   <!-- ==================== PREVIEW / RESULTADO ==================== -->
   <section class="stage" id="stage">
 
-    <div class="stage-empty" id="stageEmpty">
-      <p id="txt-stageEmpty"></p>
-    </div>
-
-    <div class="stage-preview" id="stagePreview" hidden>
-      <canvas id="overviewCanvas"></canvas>
-      <p class="overview-caption" id="overviewCaption"></p>
+    <div class="scale-compare">
+      <h2 id="txt-scaleCompareTitle"></h2>
+      <canvas id="scaleCompareCanvas" width="460" height="260"></canvas>
     </div>
 
     <div class="stage-toolbar" id="stageToolbar" hidden>
