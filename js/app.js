@@ -300,7 +300,7 @@
   // del brillo de esa celda. Efecto clásico de trama / halftone. Solo cubre
   // hasta imageHpx (el alto real de la imagen sin deformar); el resto del
   // canvas se deja en blanco.
-  function applyHalftone(posterCanvas, cellPx, mode, imageHpx) {
+  function applyHalftone(posterCanvas, cellPx, imageHpx) {
     const w = posterCanvas.width;
     const h = imageHpx;
     const cols = Math.max(1, Math.ceil(w / cellPx));
@@ -321,8 +321,7 @@
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const idx = (r * cols + c) * 4;
-        const R = data[idx], G = data[idx + 1], B = data[idx + 2];
-        const lum = 0.299 * R + 0.587 * G + 0.114 * B;
+        const lum = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
         const darkness = 1 - lum / 255;
         const radius = maxRadius * darkness;
         if (radius < 0.35) continue;
@@ -330,7 +329,7 @@
         const cy = r * cellPx + cellPx / 2;
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.fillStyle = mode === "color" ? `rgb(${R},${G},${B})` : "#000000";
+        ctx.fillStyle = "#000000";
         ctx.fill();
       }
     }
@@ -349,22 +348,25 @@
     ctx.fillRect(0, 0, posterWpx, posterHpx);
 
     if (effect !== "none") {
-      applyHalftone(canvas, cellPx, effect, imageHpx);
+      applyHalftone(canvas, cellPx, imageHpx);
     } else {
       ctx.drawImage(img, 0, 0, posterWpx, imageHpx);
     }
     return canvas;
   }
 
+  // Dibuja marcas de corte en cada esquina del área de contenido, hacia
+  // AFUERA (dentro del margen), nunca sobre la imagen impresa.
   function drawCropMarks(ctx, x0, y0, x1, y1) {
-    const len = 10;
+    const marginPx = x0; // doGenerate siempre llama con x0 === y0 === marginPx
+    const len = Math.max(4, Math.min(marginPx * 0.6, 14));
     ctx.strokeStyle = "#999999";
     ctx.lineWidth = 1;
     const corners = [
-      [x0, y0, 1, 1],
-      [x1, y0, -1, 1],
-      [x0, y1, 1, -1],
-      [x1, y1, -1, -1],
+      [x0, y0, -1, -1],
+      [x1, y0, 1, -1],
+      [x0, y1, -1, 1],
+      [x1, y1, 1, 1],
     ];
     corners.forEach(([x, y, dx, dy]) => {
       ctx.beginPath();
