@@ -59,8 +59,10 @@
   }
 
   // A partir del papel elegido, el margen/solape y cuántas hojas de ancho
-  // quiere el usuario, calcula la rejilla completa. El alto en hojas se
-  // deriva de la proporción de la imagen, así que no hay que pedirlo aparte.
+  // quiere el usuario, calcula la rejilla completa. El ancho del póster queda
+  // fijado por el número de hojas, y el alto se deriva de la proporción de la
+  // imagen SIN deformarla — por eso "rows" (hojas necesarias para cubrir ese
+  // alto) puede dejar la última fila solo parcialmente ocupada por la imagen.
   function computeGrid() {
     const cols = Math.max(1, parseInt(sheetsWideInput.value, 10) || 1);
     const margin = Math.max(0, parseFloat(marginInput.value) || 0);
@@ -73,13 +75,12 @@
 
     const stepW = printableW - overlap;
     const stepH = printableH - overlap;
-    const actualPosterWmm = cols * stepW + overlap;
-    const rows = img
-      ? Math.max(1, Math.ceil((actualPosterWmm / imgAspect - overlap) / stepH))
-      : 1;
-    const actualPosterHmm = rows * stepH + overlap;
+    const posterWmm = cols * stepW + overlap; // ancho exacto: cols es un dato directo
+    const imageHmm = posterWmm / imgAspect; // alto real de la imagen, sin estirarla
+    const rows = Math.max(1, Math.ceil((imageHmm - overlap) / stepH));
+    const gridHmm = rows * stepH + overlap; // alto total de hojas impresas (>= imageHmm)
 
-    return { cols, rows, margin, overlap, stepW, stepH, pageWmm, pageHmm, printableW, printableH, actualPosterWmm, actualPosterHmm };
+    return { cols, rows, margin, overlap, stepW, stepH, pageWmm, pageHmm, printableW, printableH, posterWmm, imageHmm, gridHmm };
   }
 
   // ---------- vista previa con rejilla sobre la imagen subida ----------
@@ -87,28 +88,31 @@
     if (!img) return;
     const grid = computeGrid();
     if (!grid) return;
-    const { cols, rows, stepW, stepH, overlap, actualPosterWmm, actualPosterHmm } = grid;
+    const { cols, rows, stepW, stepH, overlap, posterWmm, imageHmm, gridHmm } = grid;
 
     const cw = 300;
-    const ch = Math.max(1, Math.round(cw * (actualPosterHmm / actualPosterWmm)));
+    const ch = Math.max(1, Math.round(cw * (gridHmm / posterWmm)));
+    const imageChPx = Math.max(1, Math.round(cw * (imageHmm / posterWmm)));
     thumbCanvas.width = cw;
     thumbCanvas.height = ch;
     thumbCanvas.hidden = false;
     dropzoneText.hidden = true;
 
     const ctx = thumbCanvas.getContext("2d");
-    ctx.drawImage(img, 0, 0, cw, ch);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, cw, ch);
+    ctx.drawImage(img, 0, 0, cw, imageChPx);
     ctx.strokeStyle = "rgba(255,90,60,0.9)";
     ctx.lineWidth = 1;
     for (let c = 1; c < cols; c++) {
-      const x = ((c * stepW + overlap / 2) / actualPosterWmm) * cw;
+      const x = ((c * stepW + overlap / 2) / posterWmm) * cw;
       ctx.beginPath();
       ctx.moveTo(x + 0.5, 0);
       ctx.lineTo(x + 0.5, ch);
       ctx.stroke();
     }
     for (let r = 1; r < rows; r++) {
-      const y = ((r * stepH + overlap / 2) / actualPosterHmm) * ch;
+      const y = ((r * stepH + overlap / 2) / gridHmm) * ch;
       ctx.beginPath();
       ctx.moveTo(0, y + 0.5);
       ctx.lineTo(cw, y + 0.5);
@@ -179,10 +183,12 @@
 
   // Reduce la imagen fuente a una rejilla cols x rows (una muestra de color
   // promedio por celda) y dibuja un punto en cada celda cuyo tamaño depende
-  // del brillo de esa celda. Efecto clásico de trama / halftone.
-  function applyHalftone(posterCanvas, cellPx, mode) {
+  // del brillo de esa celda. Efecto clásico de trama / halftone. Solo cubre
+  // hasta imageHpx (el alto real de la imagen sin deformar); el resto del
+  // canvas se deja en blanco.
+  function applyHalftone(posterCanvas, cellPx, mode, imageHpx) {
     const w = posterCanvas.width;
-    const h = posterCanvas.height;
+    const h = imageHpx;
     const cols = Math.max(1, Math.ceil(w / cellPx));
     const rows = Math.max(1, Math.ceil(h / cellPx));
 
@@ -196,8 +202,6 @@
     const data = sctx.getImageData(0, 0, cols, rows).data;
 
     const ctx = posterCanvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, w, h);
 
     const maxRadius = (cellPx / 2) * 1.15;
     for (let r = 0; r < rows; r++) {
@@ -219,17 +223,21 @@
   }
 
   // ---------- generación del póster ----------
-  function buildPosterCanvas(posterWpx, posterHpx, effect, cellPx) {
+  // El canvas se crea al tamaño completo de la rejilla de hojas (posterHpx),
+  // pero la imagen solo se dibuja hasta imageHpx (su alto real, sin
+  // deformarla); lo que sobra por debajo queda en blanco.
+  function buildPosterCanvas(posterWpx, posterHpx, imageHpx, effect, cellPx) {
     const canvas = document.createElement("canvas");
     canvas.width = posterWpx;
     canvas.height = posterHpx;
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, posterWpx, posterHpx);
-    ctx.drawImage(img, 0, 0, posterWpx, posterHpx);
 
     if (effect !== "none") {
-      applyHalftone(canvas, cellPx, effect);
+      applyHalftone(canvas, cellPx, effect, imageHpx);
+    } else {
+      ctx.drawImage(img, 0, 0, posterWpx, imageHpx);
     }
     return canvas;
   }
@@ -285,7 +293,7 @@
       setStatus(t("statusMarginTooBig"));
       return;
     }
-    const { cols, rows, margin, overlap, stepW, stepH, pageWmm, pageHmm, printableW, printableH, actualPosterWmm, actualPosterHmm } = grid;
+    const { cols, rows, margin, overlap, stepW, stepH, pageWmm, pageHmm, printableW, printableH, posterWmm, imageHmm, gridHmm } = grid;
     const effect = effectSel.value;
     const cellPxBase = parseInt(dotSize.value, 10);
     let dpi = parseInt(dpiSel.value, 10);
@@ -299,18 +307,20 @@
       }
     }
 
-    let posterWpx = mm2px(actualPosterWmm, dpi);
-    let posterHpx = mm2px(actualPosterHmm, dpi);
+    let posterWpx = mm2px(posterWmm, dpi);
+    let posterHpx = mm2px(gridHmm, dpi);
+    let imageHpx = mm2px(imageHmm, dpi);
     const maxDim = Math.max(posterWpx, posterHpx);
     if (maxDim > MAX_POSTER_DIM_PX) {
       const scale = MAX_POSTER_DIM_PX / maxDim;
       dpi = Math.max(50, Math.round(dpi * scale));
-      posterWpx = mm2px(actualPosterWmm, dpi);
-      posterHpx = mm2px(actualPosterHmm, dpi);
+      posterWpx = mm2px(posterWmm, dpi);
+      posterHpx = mm2px(gridHmm, dpi);
+      imageHpx = mm2px(imageHmm, dpi);
       setStatus(t("statusResizedDpi", dpi));
     }
 
-    const posterCanvas = buildPosterCanvas(posterWpx, posterHpx, effect, cellPxBase);
+    const posterCanvas = buildPosterCanvas(posterWpx, posterHpx, imageHpx, effect, cellPxBase);
 
     // ----- vista general -----
     stageEmpty.hidden = true;
@@ -339,8 +349,8 @@
     }
     overviewCaption.textContent = t(
       "overviewCaption",
-      (actualPosterWmm / 10).toFixed(1),
-      (actualPosterHmm / 10).toFixed(1),
+      (posterWmm / 10).toFixed(1),
+      (imageHmm / 10).toFixed(1),
       cols, rows, dpi
     );
 
