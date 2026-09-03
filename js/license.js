@@ -61,13 +61,11 @@
     const lockedBlock = document.getElementById("unlockLocked");
     const dpiHighOpt = document.getElementById("opt-dpiHigh");
     const dpiSel = document.getElementById("dpi");
-    const dpiLockHint = document.getElementById("dpiLockHint");
 
     if (isUnlocked()) {
       if (card) card.classList.add("unlocked");
       if (lockedBlock) lockedBlock.hidden = true;
       if (dpiHighOpt) dpiHighOpt.disabled = false;
-      if (dpiLockHint) dpiLockHint.hidden = true;
       setStatusText("licenseStatusUnlocked");
     } else {
       if (card) card.classList.remove("unlocked");
@@ -76,7 +74,6 @@
         dpiHighOpt.disabled = true;
         if (dpiSel && dpiSel.value === "300") dpiSel.value = "150";
       }
-      if (dpiLockHint) dpiLockHint.hidden = false;
       setStatusText("licenseStatusLocked");
     }
   }
