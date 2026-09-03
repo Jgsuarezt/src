@@ -378,7 +378,8 @@
     });
   }
 
-  // Franja de marca de agua ocupando el 5% inferior de la hoja, solo mientras
+  // Franja de marca de agua ocupando el 5% inferior de la hoja. Solo se
+  // dibuja en la última hoja (última fila, última columna) y solo mientras
   // no haya una licencia activa (ver js/license.js).
   function drawWatermark(ctx, pageWpx, pageHpx) {
     const bandH = pageHpx * 0.05;
@@ -487,7 +488,7 @@
         if (showCropMarks) {
           drawCropMarks(pctx, marginPx, marginPx, marginPx + contentWpx, marginPx + contentHpx);
         }
-        if (!unlocked) {
+        if (!unlocked && r === rows - 1 && c === cols - 1) {
           drawWatermark(pctx, pageWpx, pageHpx);
         }
 
