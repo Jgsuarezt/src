@@ -75,7 +75,7 @@
       <div class="row">
         <label><span id="txt-fieldMargin"></span>
           <div class="unit-input">
-            <input type="number" id="margin" value="5" min="0" step="1">
+            <input type="number" id="margin" value="10" min="0" step="1">
             <span>mm</span>
           </div>
         </label>
@@ -99,11 +99,11 @@
       <h2><span class="step-no">4</span> <span id="txt-step4Title"></span></h2>
       <label><span id="txt-fieldStyle"></span>
         <select id="effect">
-          <option value="none" id="opt-effectNone">None</option>
-          <option value="bw" selected id="opt-effectBw">Black &amp; white</option>
+          <option value="none" selected id="opt-effectNone">None</option>
+          <option value="bw" id="opt-effectBw">Black &amp; white</option>
         </select>
       </label>
-      <label id="dotSizeLabel"><span id="txt-fieldDotSize"></span> <span id="dotSizeValue" class="mono">8px</span>
+      <label id="dotSizeLabel" style="display:none;"><span id="txt-fieldDotSize"></span> <span id="dotSizeValue" class="mono">8px</span>
         <div class="range-row">
           <span class="range-edge-label" id="txt-dotQualityHigh"></span>
           <input type="range" id="dotSize" min="3" max="30" value="8">
