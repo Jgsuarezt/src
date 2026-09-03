@@ -378,6 +378,22 @@
     });
   }
 
+  // Franja de marca de agua ocupando el 5% inferior de la hoja, solo mientras
+  // no haya una licencia activa (ver js/license.js).
+  function drawWatermark(ctx, pageWpx, pageHpx) {
+    const bandH = pageHpx * 0.05;
+    const y = pageHpx - bandH;
+    ctx.save();
+    ctx.fillStyle = "rgba(20, 18, 15, 0.82)";
+    ctx.fillRect(0, y, pageWpx, bandH);
+    ctx.fillStyle = "#f0ece1";
+    ctx.font = `${Math.max(9, bandH * 0.45)}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("POSTERIZADOR", pageWpx / 2, y + bandH / 2);
+    ctx.restore();
+  }
+
   function injectPrintPageSize(wMm, hMm) {
     if (printStyleTag) printStyleTag.remove();
     printStyleTag = document.createElement("style");
@@ -412,7 +428,9 @@
     const { cols, rows, margin, stepW, stepH, pageWmm, pageHmm, printableW, printableH, posterWmm, imageHmm, gridHmm } = grid;
     const effect = effectSel.value;
     const cellPxBase = parseInt(dotSize.value, 10);
+    const unlocked = window.PosterizadorLicense ? window.PosterizadorLicense.isUnlocked() : false;
     let dpi = parseInt(dpiSel.value, 10);
+    if (!unlocked && dpi > 150) dpi = 150; // 300 dpi requiere licencia, por si el <select> fue forzado
     const totalPages = cols * rows;
 
     if (totalPages > MAX_PAGES_WITHOUT_CONFIRM) {
@@ -468,6 +486,9 @@
         );
         if (showCropMarks) {
           drawCropMarks(pctx, marginPx, marginPx, marginPx + contentWpx, marginPx + contentHpx);
+        }
+        if (!unlocked) {
+          drawWatermark(pctx, pageWpx, pageHpx);
         }
 
         const card = document.createElement("div");
@@ -526,6 +547,13 @@
     renderScaleCompare();
     if (img) generate();
   });
+
+  // ---------- cambio de estado de licencia (desbloqueo) ----------
+  if (window.PosterizadorLicense) {
+    window.PosterizadorLicense.onChange(() => {
+      if (img) generate();
+    });
+  }
 
   document.addEventListener("DOMContentLoaded", renderScaleCompare);
 })();

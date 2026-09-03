@@ -237,6 +237,43 @@ body {
   font-size: 13px;
 }
 
+.unlock-card {
+  border: 1.5px solid var(--accent-ink);
+}
+.unlock-card .lock-icon { color: var(--accent-ink); flex: none; }
+.unlock-card.unlocked { border-color: var(--line); }
+.unlock-card.unlocked .lock-icon { color: var(--ink-faint); }
+.unlock-card #buyLicenseBtn { width: 100%; margin-bottom: 10px; }
+.license-row {
+  display: flex;
+  gap: 8px;
+}
+.license-row input {
+  flex: 1;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+}
+.license-row input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+#licenseStatusText {
+  margin-top: 10px;
+}
+#dpiLockHint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 0;
+  color: var(--ink-faint);
+}
+select:disabled, option:disabled { color: var(--ink-faint); }
+
 label {
   display: flex;
   flex-direction: column;
