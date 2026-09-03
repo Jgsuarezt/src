@@ -378,20 +378,30 @@
     });
   }
 
-  // Franja de marca de agua ocupando el 5% inferior de la hoja. Solo se
-  // dibuja en la última hoja (última fila, última columna) y solo mientras
-  // no haya una licencia activa (ver js/license.js).
+  // Bloque de marca de agua en la esquina inferior derecha, ocupando el 15%
+  // del ancho y el 15% del alto de la hoja. Solo se dibuja en la última hoja
+  // (última fila, última columna) y solo mientras no haya una licencia
+  // activa (ver js/license.js).
   function drawWatermark(ctx, pageWpx, pageHpx) {
-    const bandH = pageHpx * 0.05;
-    const y = pageHpx - bandH;
+    const boxW = pageWpx * 0.15;
+    const boxH = pageHpx * 0.15;
+    const x = pageWpx - boxW;
+    const y = pageHpx - boxH;
     ctx.save();
     ctx.fillStyle = "rgba(20, 18, 15, 0.82)";
-    ctx.fillRect(0, y, pageWpx, bandH);
+    ctx.fillRect(x, y, boxW, boxH);
+
     ctx.fillStyle = "#f0ece1";
-    ctx.font = `${Math.max(9, bandH * 0.45)}px sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("POSTERIZADOR", pageWpx / 2, y + bandH / 2);
+    const maxTextWidth = boxW * 0.86;
+    let fontSize = Math.max(8, boxH * 0.28);
+    ctx.font = `${fontSize}px sans-serif`;
+    while (fontSize > 6 && ctx.measureText("POSTERIZADOR").width > maxTextWidth) {
+      fontSize -= 1;
+      ctx.font = `${fontSize}px sans-serif`;
+    }
+    ctx.fillText("POSTERIZADOR", x + boxW / 2, y + boxH / 2);
     ctx.restore();
   }
 
