@@ -265,13 +265,6 @@ body {
 #licenseStatusText {
   margin-top: 10px;
 }
-#dpiLockHint {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-left: 0;
-  color: var(--ink-faint);
-}
 select:disabled, option:disabled { color: var(--ink-faint); }
 
 label {
@@ -281,6 +274,19 @@ label {
   font-size: 0.82rem;
   color: var(--ink-soft);
   flex: 1;
+}
+/* Etiqueta accesible pero oculta visualmente: evita repetir el mismo
+   texto que ya dice el título del paso (p. ej. "4. ESTILO"). */
+.sr-only-label span:first-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .row {
