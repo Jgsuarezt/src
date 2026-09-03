@@ -378,12 +378,12 @@
     });
   }
 
-  // Bloque de marca de agua en la esquina inferior derecha, ocupando el 15%
+  // Bloque de marca de agua en la esquina inferior derecha, ocupando el 50%
   // del ancho y el 15% del alto de la hoja. Solo se dibuja en la última hoja
   // (última fila, última columna) y solo mientras no haya una licencia
   // activa (ver js/license.js).
   function drawWatermark(ctx, pageWpx, pageHpx) {
-    const boxW = pageWpx * 0.15;
+    const boxW = pageWpx * 0.5;
     const boxH = pageHpx * 0.15;
     const x = pageWpx - boxW;
     const y = pageHpx - boxH;
