@@ -1,13 +1,10 @@
 /* Desbloqueo de pago único vía la License API pública de Lemon Squeezy.
    No requiere backend propio: esa API está pensada para ser llamada
-   directamente desde el navegador con la clave que recibe el comprador.
-
-   CONFIGURA ESTO cuando tengas tu producto creado en Lemon Squeezy:
-   pega aquí el enlace de compra (Checkout / Payment Link) de tu producto. */
+   directamente desde el navegador con la clave que recibe el comprador. */
 (() => {
   "use strict";
 
-  const CHECKOUT_URL = "https://TU-TIENDA.lemonsqueezy.com/buy/TU-PRODUCTO-ID";
+  const CHECKOUT_URL = "https://posterizer.lemonsqueezy.com/checkout/buy/bbe91066-deba-437c-b63c-f8f30fee0bbd";
   const STORAGE_KEY = "posterizador_license";
   const VALIDATE_ENDPOINT = "https://api.lemonsqueezy.com/v1/licenses/validate";
 
